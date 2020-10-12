@@ -3,11 +3,14 @@
 
 #include "OStrategicPawn.h"
 
+
+#include "NavigationSystem.h"
 #include "OInteractive.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
 
+class UNavigationSystemV1;
 // Sets default values
 AOStrategicPawn::AOStrategicPawn()
 {
@@ -42,6 +45,7 @@ void AOStrategicPawn::BeginPlay()
 void AOStrategicPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AOStrategicPawn::OnSelectObject);
+	InputComponent->BindAction("RightClick", IE_Pressed, this, &AOStrategicPawn::OnSelectSecondary);
 	InputComponent->BindAxis("MoveForward", this, &AOStrategicPawn::OnMoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AOStrategicPawn::OnMoveRight);
 }
@@ -78,10 +82,56 @@ void AOStrategicPawn::OnSelectObject()
 		FHitResult Hit;
 		pc->GetHitResultUnderCursor(pc->CurrentClickTraceChannel, true, Hit);
 
-		if (Hit.bBlockingHit && Hit.GetComponent()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
+		if (Hit.bBlockingHit && Hit.GetActor()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
 		{
-			IOInteractive::Execute_OnInteractStart(Hit.GetComponent());
+			IOInteractive::Execute_OnInteractStart(Hit.GetActor());
+			SelectedActor = Hit.GetActor();
+		} else
+		{
+			IOInteractive::Execute_OnInteractStop(Hit.GetActor());
+			SelectedActor = nullptr;
 		}
 	}
 }
 
+void AOStrategicPawn::OnSelectSecondary()
+{
+	APlayerController* pc = Cast<APlayerController>(Controller);
+
+	if (pc && SelectedActor != nullptr)
+	{
+		// Trace to see what is under the touch location
+		FHitResult Hit;
+		pc->GetHitResultUnderCursor(pc->CurrentClickTraceChannel, true, Hit);
+
+		if (Hit.bBlockingHit && Hit.GetActor()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
+		{
+			IOInteractive::Execute_OnTandemInteractActor(SelectedActor, Hit.GetActor());
+		} else
+		{
+			FVector WorldLocation;
+			FVector WorldDirection;
+
+			if(pc->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+			{
+				const FVector NavMeshLocation = GetPointOnNavMesh(WorldLocation);
+				IOInteractive::Execute_OnTandemInteractLocation(SelectedActor, NavMeshLocation);	
+			}
+		}
+	}
+}
+
+FVector AOStrategicPawn::GetPointOnNavMesh(FVector point) const
+{
+	FNavLocation location;
+	const FNavAgentProperties* navAgentProperties = &GetNavAgentPropertiesRef();
+	UNavigationSystemV1* navSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
+
+	if (navSystem == nullptr)
+	{
+		return point;
+	}
+
+	navSystem->ProjectPointToNavigation(point, location, FVector(50, 50, 1000), navAgentProperties);
+	return location.Location;
+}

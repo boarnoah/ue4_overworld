@@ -39,7 +39,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UFloatingPawnMovement* Movement;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	AActor* SelectedActor;
+
 	void OnMoveForward(float Value);
 	void OnMoveRight(float Value);
 	void OnSelectObject();
+	void OnSelectSecondary();
+	FVector GetPointOnNavMesh(FVector Point) const;
 };

@@ -25,6 +25,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnInteractStart();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnInteractStop();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnTandemInteractActor(AActor* Actor);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void OnTandemInteractLocation(FVector Location);

@@ -18,6 +18,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 public:	
 	// Called every frame
@@ -37,4 +38,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UFloatingPawnMovement* Movement;
+
+	void OnMoveForward(float Value);
+	void OnMoveRight(float Value);
+	void OnSelectObject();
 };

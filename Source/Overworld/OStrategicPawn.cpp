@@ -3,6 +3,7 @@
 
 #include "OStrategicPawn.h"
 
+#include "OInteractive.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -38,19 +39,49 @@ void AOStrategicPawn::BeginPlay()
 	
 }
 
+void AOStrategicPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AOStrategicPawn::OnSelectObject);
+	InputComponent->BindAxis("MoveForward", this, &AOStrategicPawn::OnMoveForward);
+	InputComponent->BindAxis("MoveRight", this, &AOStrategicPawn::OnMoveRight);
+}
+
 // Called every frame
 void AOStrategicPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void AOStrategicPawn::MoveForward(float Value)
+void AOStrategicPawn::OnMoveForward(float Value)
 {
-	AddMovementInput(GetActorForwardVector(), Value);
+	if (Value != 0.0f)
+	{
+		AddMovementInput(GetActorForwardVector(), Value);
+	}
 }
 
-void AOStrategicPawn::MoveRight(float Value)
+void AOStrategicPawn::OnMoveRight(float Value)
 {
-	AddMovementInput(GetActorRightVector(), Value);
+	if (Value != 0.0f)
+	{
+		AddMovementInput(GetActorRightVector(), Value);
+	}
+}
+
+void AOStrategicPawn::OnSelectObject()
+{
+	APlayerController* pc = Cast<APlayerController>(Controller);
+
+	if (pc)
+	{
+		// Trace to see what is under the touch location
+		FHitResult Hit;
+		pc->GetHitResultUnderCursor(pc->CurrentClickTraceChannel, true, Hit);
+
+		if (Hit.bBlockingHit && Hit.GetComponent()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
+		{
+			IOInteractive::Execute_OnInteractStart(Hit.GetComponent());
+		}
+	}
 }
 

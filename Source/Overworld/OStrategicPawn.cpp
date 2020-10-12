@@ -56,7 +56,7 @@ void AOStrategicPawn::OnMoveForward(float Value)
 {
 	if (Value != 0.0f)
 	{
-		AddMovementInput(GetActorForwardVector(), Value);
+		AddMovementInput(FVector::ForwardVector, Value);
 	}
 }
 
@@ -64,7 +64,7 @@ void AOStrategicPawn::OnMoveRight(float Value)
 {
 	if (Value != 0.0f)
 	{
-		AddMovementInput(GetActorRightVector(), Value);
+		AddMovementInput(FVector::RightVector, Value);
 	}
 }
 

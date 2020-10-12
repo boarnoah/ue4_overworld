@@ -22,4 +22,5 @@ private:
 
 	void OnMoveForward(float Value);
 	void OnMoveRight(float Value);
+	void OnSelectObject();
 };

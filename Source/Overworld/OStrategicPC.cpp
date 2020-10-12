@@ -3,6 +3,7 @@
 
 #include "OStrategicPC.h"
 
+#include "OInteractive.h"
 #include "OStrategicPawn.h"
 
 AOStrategicPC::AOStrategicPC()
@@ -19,7 +20,8 @@ void AOStrategicPC::PlayerTick(float DeltaTime)
 void AOStrategicPC::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	// Bind jump events
+
+	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AOStrategicPC::OnSelectObject);
 	InputComponent->BindAxis("MoveForward", this, &AOStrategicPC::OnMoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AOStrategicPC::OnMoveRight);
 }
@@ -49,5 +51,17 @@ void AOStrategicPC::OnMoveRight(const float Value)
 		{
 			StrategicCameraPlayer->MoveRight(Value);
 		}
+	}
+}
+
+void AOStrategicPC::OnSelectObject()
+{
+	// Trace to see what is under the touch location
+	FHitResult Hit;
+	GetHitResultUnderCursor(CurrentClickTraceChannel, true, Hit);
+
+	if (Hit.bBlockingHit && Hit.GetComponent()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
+	{
+		IOInteractive::Execute_OnInteractStart(Hit.GetComponent());
 	}
 }

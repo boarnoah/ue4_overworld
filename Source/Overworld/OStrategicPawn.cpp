@@ -44,6 +44,13 @@ void AOStrategicPawn::BeginPlay()
 
 void AOStrategicPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	APlayerController* pc = Cast<APlayerController>(Controller);
+	if(pc)
+	{
+		pc->bShowMouseCursor = true;
+		pc->DefaultMouseCursor = EMouseCursor::Crosshairs;
+	}
+
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AOStrategicPawn::OnSelectObject);
 	InputComponent->BindAction("RightClick", IE_Pressed, this, &AOStrategicPawn::OnSelectSecondary);
 	InputComponent->BindAxis("MoveForward", this, &AOStrategicPawn::OnMoveForward);
@@ -86,9 +93,9 @@ void AOStrategicPawn::OnSelectObject()
 		{
 			IOInteractive::Execute_OnInteractStart(Hit.GetActor());
 			SelectedActor = Hit.GetActor();
-		} else
+		} else if (SelectedActor != nullptr)
 		{
-			IOInteractive::Execute_OnInteractStop(Hit.GetActor());
+			IOInteractive::Execute_OnInteractStop(SelectedActor);
 			SelectedActor = nullptr;
 		}
 	}
@@ -109,13 +116,11 @@ void AOStrategicPawn::OnSelectSecondary()
 			IOInteractive::Execute_OnTandemInteractActor(SelectedActor, Hit.GetActor());
 		} else
 		{
-			FVector WorldLocation;
-			FVector WorldDirection;
+			FVector NavMeshLocation = GetPointOnNavMesh(Hit.ImpactPoint);
 
-			if(pc->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+			if (NavMeshLocation != FVector::ZeroVector)
 			{
-				const FVector NavMeshLocation = GetPointOnNavMesh(WorldLocation);
-				IOInteractive::Execute_OnTandemInteractLocation(SelectedActor, NavMeshLocation);	
+				IOInteractive::Execute_OnTandemInteractLocation(SelectedActor, NavMeshLocation);
 			}
 		}
 	}
@@ -132,6 +137,6 @@ FVector AOStrategicPawn::GetPointOnNavMesh(FVector point) const
 		return point;
 	}
 
-	navSystem->ProjectPointToNavigation(point, location, FVector(50, 50, 1000), navAgentProperties);
+	navSystem->ProjectPointToNavigation(point, location, FVector(5, 5, 2000), navAgentProperties);
 	return location.Location;
 }

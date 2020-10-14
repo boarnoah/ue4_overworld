@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/GameModeBase.h"
 #include "OverworldGameMode.generated.h"
 
+class AOStrategicCharacter;
+class AOStrategicEncounter;
 UCLASS(minimalapi)
 class AOverworldGameMode : public AGameModeBase
 {
@@ -13,6 +16,8 @@ class AOverworldGameMode : public AGameModeBase
 
 public:
 	AOverworldGameMode();
+
+	void OnEncounterOverlap(AOStrategicEncounter* Encounter, AOStrategicCharacter* Character);
 };
 
 

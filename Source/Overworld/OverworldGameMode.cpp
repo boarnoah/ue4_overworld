@@ -7,6 +7,8 @@
 #include "OStrategicEncounter.h"
 #include "OverworldPlayerController.h"
 #include "OverworldCharacter.h"
+#include "Engine/LevelStreamingDynamic.h"
+#include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 
 AOverworldGameMode::AOverworldGameMode()
@@ -36,5 +38,44 @@ void AOverworldGameMode::OnEncounterOverlap(AOStrategicEncounter* Encounter, AOS
 	 * state needs to be thrown away and rehydrated
 	 */
 
-	UE_LOG(LogTemp, Log, TEXT("Encounter %s Overlap with Character %s, starting encounter"), *Encounter->GetName(), *Character->GetName())
+	// TODO: Add return to strategic from tactical
+	// Using a simplistic toggle to stream in and out level for testing
+	if (!InEncounter)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Encounter %s Overlap with Character %s, starting encounter"), *Encounter->GetName(), *Character->GetName())
+		StreamLoadEncounterLevel(EncounterLevel);
+	} else
+	{
+		StreamUnloadEncounterLevel(EncounterLevel);
+	}
+}
+
+void AOverworldGameMode::StreamLoadEncounterLevel(FName Level)
+{
+	bool bSuccessfulLoad = false;
+	StreamedEncounterLevel = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), Level.ToString(), FVector(0, 0, 10), FRotator(), bSuccessfulLoad);
+
+	if (bSuccessfulLoad)
+	{
+		InEncounter = true;
+		UE_LOG(LogTemp, Log, TEXT("Successfully loaded level, changing chars"));
+	}
+}
+
+void AOverworldGameMode::StreamUnloadEncounterLevel(FName Level)
+{
+	InEncounter = false;
+	StreamedEncounterLevel->SetShouldBeLoaded(false);
+	TransferPlayersToStrategic();
+}
+
+
+void AOverworldGameMode::SpawnAndTransferPlayersToTactical()
+{
+	UE_LOG(LogTemp, Log, TEXT("Spawning and possessing tactical pawns"));
+}
+
+void AOverworldGameMode::TransferPlayersToStrategic()
+{
+	UE_LOG(LogTemp, Log, TEXT("Possessing stategic player pawn"));
 }

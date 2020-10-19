@@ -52,7 +52,7 @@ void AOStrategicEncounter::OnOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 		if (Gm)
 		{
-			Gm->OnEncounterOverlap(this, StrategicCharacter);
+			Gm->OnEncounterStart(this, StrategicCharacter);
 		}
 	}
 }

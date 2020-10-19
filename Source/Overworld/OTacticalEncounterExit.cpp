@@ -52,7 +52,7 @@ void AOTacticalEncounterExit::OnOverlap(UPrimitiveComponent* OverlappedComponent
 
 		if (Gm)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Entered exit point for encounter"));
+			Gm->OnEncounterEnd(TacticalCharacter);
 		}
 	}
 }

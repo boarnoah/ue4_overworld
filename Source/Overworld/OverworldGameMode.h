@@ -19,7 +19,8 @@ class AOverworldGameMode : public AGameModeBase
 public:
 	AOverworldGameMode();
 
-	void OnEncounterOverlap(AOStrategicEncounter* Encounter, AOStrategicCharacter* Character);
+	void OnEncounterStart(AOStrategicEncounter* Encounter, AOStrategicCharacter* Character);
+	void OnEncounterEnd(AOTacticalCharacter* Character);
 
 	// TODO: In reality this would be data assets containing lists of levels etc...
 	UPROPERTY(EditDefaultsOnly)
@@ -38,6 +39,7 @@ public:
 	bool InEncounter;
 
 	// Spawn tactical pawns, un-posses from strategic and posses the tactical pawns
+	UFUNCTION()
 	void SpawnAndTransferPlayersToTactical();
 	// Repossess strategic pawns
 	void TransferPlayersToStrategic();

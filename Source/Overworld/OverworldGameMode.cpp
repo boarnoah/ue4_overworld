@@ -5,9 +5,10 @@
 
 #include "OStrategicCharacter.h"
 #include "OStrategicEncounter.h"
+#include "OTacticalCharacter.h"
 #include "OverworldPlayerController.h"
-#include "OverworldCharacter.h"
 #include "Engine/LevelStreamingDynamic.h"
+#include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -53,7 +54,7 @@ void AOverworldGameMode::OnEncounterOverlap(AOStrategicEncounter* Encounter, AOS
 void AOverworldGameMode::StreamLoadEncounterLevel(FName Level)
 {
 	bool bSuccessfulLoad = false;
-	StreamedEncounterLevel = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), Level.ToString(), FVector(0, 0, 10), FRotator(), bSuccessfulLoad);
+	StreamedEncounterLevel = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), Level.ToString(), EncounterLevelOffset, FRotator(0, 0, 0), bSuccessfulLoad);
 
 	if (bSuccessfulLoad)
 	{

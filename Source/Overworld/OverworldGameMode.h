@@ -7,6 +7,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "OverworldGameMode.generated.h"
 
+class AOTacticalCharacter;
 class ULevelStreamingDynamic;
 class AOStrategicCharacter;
 class AOStrategicEncounter;
@@ -40,6 +41,12 @@ public:
 	void SpawnAndTransferPlayersToTactical();
 	// Repossess strategic pawns
 	void TransferPlayersToStrategic();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
+	TSubclassOf<AOTacticalCharacter> TacticalCharacterClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FVector EncounterLevelOffset = FVector(0, 0, 1000);
 };
 
 

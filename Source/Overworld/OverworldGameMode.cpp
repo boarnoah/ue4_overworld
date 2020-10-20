@@ -80,44 +80,58 @@ void AOverworldGameMode::SpawnAndTransferPlayersToTactical()
 	// Don't want this re-trigger after initial posses (ex: when level is unloading)
 	StreamedEncounterLevel->OnLevelShown.RemoveDynamic(this, &AOverworldGameMode::SpawnAndTransferPlayersToTactical);
 
+	FActorSpawnParameters ActorSpawnParams;
+	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	ActorSpawnParams.Owner = this;
+
+	// Can't use TActorIterator from world since we only want player start actors  from the encounter level
 	TArray<AActor*> EncounterLevelActors = StreamedEncounterLevel->GetLoadedLevel()->Actors;
+	TArray<APlayerStart*> PlayerStarts;
+
+	// Find player starts in the encounter level
 	for (AActor* Actor : EncounterLevelActors)
 	{
-		if (Actor->IsA<APlayerStart>())
+		APlayerStart* PlayerStart = Cast<APlayerStart>(Actor);
+
+		if (PlayerStart != nullptr)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Found spawn point"));
-
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-			ActorSpawnParams.Owner = this;
-
-			AOTacticalCharacter* TacticalActor =  GetWorld()->SpawnActor<AOTacticalCharacter>(TacticalCharacterClass, Actor->GetActorLocation(), Actor->GetActorRotation(), ActorSpawnParams);
-			APawn* TacticalPawn = Cast<APawn>(TacticalActor);
-			UE_LOG(LogTemp, Log, TEXT("Spawned tactical character"));
-
-			// For simplicity for PoC just change possession for first player controller
-			APlayerController* Pc =  GetWorld()->GetFirstPlayerController();
-
-			if(TacticalPawn != nullptr && Pc != nullptr)
-			{
-				UE_LOG(LogTemp, Log, TEXT("Possessed tactical character"));
-				Pc->Possess(TacticalPawn);
-			}
-
-			break;
+			PlayerStarts.Emplace(PlayerStart);
 		}
 	}
 
+	if (GetNumPlayers() > PlayerStarts.Num())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Not enough player start locations to spawn tactical pawns!"));
+		return;
+	}
+
+	auto PlayerStartsItr = PlayerStarts.CreateConstIterator();
+
+	// Spawn tactical pawns and make player controllers posses
+	for (FConstPlayerControllerIterator PcItr = GetWorld()->GetPlayerControllerIterator(); PcItr; ++PcItr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Spawned tactical character"));
+		AOTacticalCharacter* TacticalActor =  GetWorld()->SpawnActor<AOTacticalCharacter>(TacticalCharacterClass, (*PlayerStartsItr)->GetActorLocation(), (*PlayerStartsItr)->GetActorRotation(), ActorSpawnParams);
+		APawn* TacticalPawn = Cast<APawn>(TacticalActor);
+
+		if(TacticalPawn != nullptr)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Possessed tactical character"));
+			PcItr->Get()->Possess(TacticalPawn);
+		}
+
+		++PlayerStartsItr;
+	}
 }
 
 void AOverworldGameMode::TransferPlayersToStrategic()
 {
-	APlayerController* Pc = GetWorld()->GetFirstPlayerController();
+	FConstPlayerControllerIterator PcItr = GetWorld()->GetPlayerControllerIterator();
 
 	for (TActorIterator<AOStrategicPawn> It(GetWorld()); It; ++It)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Possessed strategic character"));
-		Pc->Possess(*It);
+		(*PcItr)->Possess(*It);
 		break;
 	}
 }

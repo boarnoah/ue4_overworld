@@ -7,6 +7,7 @@
 #include "NavigationSystem.h"
 #include "OInteractive.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -18,9 +19,12 @@ AOStrategicPawn::AOStrategicPawn()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
+	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	SetRootComponent(Sphere);
+
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->SetupAttachment(GetRootComponent());
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
 	CameraBoom->TargetArmLength = 800.f;
 	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
@@ -79,6 +83,7 @@ void AOStrategicPawn::OnMoveRight(float Value)
 	}
 }
 
+// Naive, ideally authoritatively see if hit happens based on world position and direction server-side
 void AOStrategicPawn::OnSelectObject()
 {
 	APlayerController* pc = Cast<APlayerController>(Controller);
@@ -108,21 +113,11 @@ void AOStrategicPawn::OnSelectSecondary()
 	if (pc && SelectedActor != nullptr)
 	{
 		// Trace to see what is under the touch location
+		// This logic ideally happens server side (for FoW, and control reasons). Simpler to keep it here for now.
 		FHitResult Hit;
 		pc->GetHitResultUnderCursor(pc->CurrentClickTraceChannel, true, Hit);
 
-		if (Hit.bBlockingHit && Hit.GetActor()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
-		{
-			IOInteractive::Execute_OnTandemInteractActor(SelectedActor, Hit.GetActor());
-		} else
-		{
-			FVector NavMeshLocation = GetPointOnNavMesh(Hit.ImpactPoint);
-
-			if (NavMeshLocation != FVector::ZeroVector)
-			{
-				IOInteractive::Execute_OnTandemInteractLocation(SelectedActor, NavMeshLocation);
-			}
-		}
+		OnServerSelectSecondary(SelectedActor, Hit);
 	}
 }
 
@@ -139,4 +134,25 @@ FVector AOStrategicPawn::GetPointOnNavMesh(FVector point) const
 
 	navSystem->ProjectPointToNavigation(point, location, FVector(5, 5, 2000), navAgentProperties);
 	return location.Location;
+}
+
+void AOStrategicPawn::OnServerSelectSecondary_Implementation(AActor* Actor, FHitResult Hit)
+{
+	if (Hit.bBlockingHit && Hit.GetActor()->GetClass()->ImplementsInterface(UOInteractive::StaticClass()))
+	{
+		IOInteractive::Execute_OnTandemInteractActor(Actor, Hit.GetActor());
+	} else
+	{
+		FVector NavMeshLocation = GetPointOnNavMesh(Hit.ImpactPoint);
+		UE_LOG(LogTemp, Log, TEXT("Move order issued!"));
+		if (NavMeshLocation != FVector::ZeroVector)
+		{
+			IOInteractive::Execute_OnTandemInteractLocation(Actor, NavMeshLocation);
+		}
+	}
+}
+
+bool AOStrategicPawn::OnServerSelectSecondary_Validate(AActor* Actor, FHitResult Hit)
+{
+	return true;
 }

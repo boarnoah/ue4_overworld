@@ -28,6 +28,9 @@ public:
 	void MoveRight(float Value);
 
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* Sphere;
+
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
@@ -47,4 +50,6 @@ private:
 	void OnSelectObject();
 	void OnSelectSecondary();
 	FVector GetPointOnNavMesh(FVector Point) const;
+	UFUNCTION(Server, Reliable, WithValidation)
+	void OnServerSelectSecondary(AActor* Actor, FHitResult Hit);
 };

@@ -2,6 +2,7 @@
 
 
 #include "OStrategicCharacter.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 // Sets default values
 AOStrategicCharacter::AOStrategicCharacter()
@@ -33,6 +34,8 @@ void AOStrategicCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void AOStrategicCharacter::OnTandemInteractLocation_Implementation(FVector Location)
 {
+	UE_LOG(LogTemp, Log, TEXT("Tandem interact order received"));
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
 }
 
 void AOStrategicCharacter::OnTandemInteractActor_Implementation(AActor* Actor)

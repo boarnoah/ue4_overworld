@@ -27,6 +27,18 @@ AOverworldGameMode::AOverworldGameMode()
 	}
 }
 
+void AOverworldGameMode::InitGameState()
+{
+	Super::InitGameState();
+
+	OGameState = Cast<AOGameState>(GameState);
+
+	if (OGameState == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameMode should be subclass of OGameState"));
+	}
+}
+
 void AOverworldGameMode::OnEncounterStart(AOStrategicEncounter* Encounter, AOStrategicCharacter* Character)
 {
 	/* TODO: Implement and compare the different approaches
@@ -42,50 +54,31 @@ void AOverworldGameMode::OnEncounterStart(AOStrategicEncounter* Encounter, AOStr
 	 */
 
 	// Using a simplistic toggle to stream in and out level for testing
-	if (!InEncounter)
+
+	if (!OGameState->InEncounter)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Encounter %s Overlap with Character %s, starting encounter"), *Encounter->GetName(), *Character->GetName())
-		StreamLoadEncounterLevel(EncounterLevel);
+		OGameState->StreamLoadEncounterLevel(EncounterLevel, EncounterLevelOffset);
 	}
 }
 
 void AOverworldGameMode::OnEncounterEnd(AOTacticalCharacter* Character)
 {
-	InEncounter = false;
-	StreamUnloadEncounterLevel(EncounterLevel);
+	OGameState->InEncounter = false;
+	OGameState->StreamUnloadEncounterLevel(EncounterLevel);
 }
-
-void AOverworldGameMode::StreamLoadEncounterLevel(FName Level)
-{
-	bool bSuccessfulLoad = false;
-	StreamedEncounterLevel = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), Level.ToString(), EncounterLevelOffset, FRotator(0, 0, 0), bSuccessfulLoad);
-
-	if (bSuccessfulLoad)
-	{
-		InEncounter = true;
-		StreamedEncounterLevel->OnLevelShown.AddDynamic(this, &AOverworldGameMode::SpawnAndTransferPlayersToTactical);
-	}
-}
-
-void AOverworldGameMode::StreamUnloadEncounterLevel(FName Level)
-{
-	InEncounter = false;
-	StreamedEncounterLevel->SetShouldBeLoaded(false);
-	TransferPlayersToStrategic();
-}
-
 
 void AOverworldGameMode::SpawnAndTransferPlayersToTactical()
 {
 	// Don't want this re-trigger after initial posses (ex: when level is unloading)
-	StreamedEncounterLevel->OnLevelShown.RemoveDynamic(this, &AOverworldGameMode::SpawnAndTransferPlayersToTactical);
+	OGameState->StreamedEncounterLevel->OnLevelShown.RemoveDynamic(this, &AOverworldGameMode::SpawnAndTransferPlayersToTactical);
 
 	FActorSpawnParameters ActorSpawnParams;
 	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 	ActorSpawnParams.Owner = this;
 
 	// Can't use TActorIterator from world since we only want player start actors  from the encounter level
-	TArray<AActor*> EncounterLevelActors = StreamedEncounterLevel->GetLoadedLevel()->Actors;
+	TArray<AActor*> EncounterLevelActors = OGameState->StreamedEncounterLevel->GetLoadedLevel()->Actors;
 	TArray<APlayerStart*> PlayerStarts;
 
 	// Find player starts in the encounter level
@@ -110,13 +103,11 @@ void AOverworldGameMode::SpawnAndTransferPlayersToTactical()
 	// Spawn tactical pawns and make player controllers posses
 	for (FConstPlayerControllerIterator PcItr = GetWorld()->GetPlayerControllerIterator(); PcItr; ++PcItr)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Spawned tactical character"));
 		AOTacticalCharacter* TacticalActor =  GetWorld()->SpawnActor<AOTacticalCharacter>(TacticalCharacterClass, (*PlayerStartsItr)->GetActorLocation(), (*PlayerStartsItr)->GetActorRotation(), ActorSpawnParams);
 		APawn* TacticalPawn = Cast<APawn>(TacticalActor);
 
 		if(TacticalPawn != nullptr)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Possessed tactical character"));
 			PcItr->Get()->Possess(TacticalPawn);
 		}
 
@@ -127,11 +118,18 @@ void AOverworldGameMode::SpawnAndTransferPlayersToTactical()
 void AOverworldGameMode::TransferPlayersToStrategic()
 {
 	FConstPlayerControllerIterator PcItr = GetWorld()->GetPlayerControllerIterator();
+	const int NumControllers = GetWorld()->GetNumPlayerControllers();
 
 	for (TActorIterator<AOStrategicPawn> It(GetWorld()); It; ++It)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Possessed strategic character"));
-		(*PcItr)->Possess(*It);
-		break;
+		if (PcItr.GetIndex() < NumControllers)
+		{
+            (*PcItr)->Possess(*It);
+            ++PcItr;
+			(*It)->OnRePossesByPlayer();
+		} else
+		{
+			break;
+		}
 	}
 }

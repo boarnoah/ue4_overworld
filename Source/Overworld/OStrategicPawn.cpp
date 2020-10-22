@@ -48,6 +48,8 @@ void AOStrategicPawn::BeginPlay()
 
 void AOStrategicPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
 	APlayerController* pc = Cast<APlayerController>(Controller);
 	if(pc)
 	{
@@ -134,6 +136,17 @@ FVector AOStrategicPawn::GetPointOnNavMesh(FVector point) const
 
 	navSystem->ProjectPointToNavigation(point, location, FVector(5, 5, 2000), navAgentProperties);
 	return location.Location;
+}
+
+// This makes a lot more sense on player controllers directly
+void AOStrategicPawn::OnRePossesByPlayer_Implementation()
+{
+	APlayerController* pc = Cast<APlayerController>(Controller);
+	if(pc)
+	{
+		pc->bShowMouseCursor = true;
+		pc->DefaultMouseCursor = EMouseCursor::Crosshairs;
+	}
 }
 
 void AOStrategicPawn::OnServerSelectSecondary_Implementation(AActor* Actor, FHitResult Hit)

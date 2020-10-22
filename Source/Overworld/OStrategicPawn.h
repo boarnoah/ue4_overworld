@@ -26,6 +26,8 @@ public:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	UFUNCTION(Client, Reliable)
+    void OnRePossesByPlayer();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

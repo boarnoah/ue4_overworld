@@ -120,6 +120,7 @@ void AOverworldGameMode::TransferPlayersToStrategic()
 	FConstPlayerControllerIterator PcItr = GetWorld()->GetPlayerControllerIterator();
 	const int NumControllers = GetWorld()->GetNumPlayerControllers();
 
+	// Go through and re-posses strategic pawns for all the PCs
 	for (TActorIterator<AOStrategicPawn> It(GetWorld()); It; ++It)
 	{
 		if (PcItr.GetIndex() < NumControllers)
@@ -131,5 +132,11 @@ void AOverworldGameMode::TransferPlayersToStrategic()
 		{
 			break;
 		}
+	}
+
+	// Delete the dynamically spawned actors (in this case the Tactical characters
+	for (TActorIterator<AOTacticalCharacter> It(GetWorld()); It; ++It)
+	{
+		(*It)->Destroy();
 	}
 }

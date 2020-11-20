@@ -169,3 +169,12 @@ bool AOStrategicPawn::OnServerSelectSecondary_Validate(AActor* Actor, FHitResult
 {
 	return true;
 }
+
+FString AOStrategicPawn::GetSaveId_Implementation()
+{
+	return GetFName().ToString() + "_" + FGuid().ToString();
+}
+
+void AOStrategicPawn::OnPostRestore_Implementation()
+{
+}

@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 
 #include "OInteractive.h"
+#include "OSaveRestore.h"
 #include "GameFramework/Character.h"
 #include "OStrategicCharacter.generated.h"
 
 UCLASS()
-class OVERWORLD_API AOStrategicCharacter : public ACharacter, public IOInteractive
+class OVERWORLD_API AOStrategicCharacter : public ACharacter, public IOInteractive, public IOSaveRestore
 {
 	GENERATED_BODY()
 
@@ -27,6 +28,8 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// Interface OInteractive
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnInteractStart();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
@@ -35,4 +38,10 @@ public:
     void OnTandemInteractActor(AActor* Actor);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void OnTandemInteractLocation(FVector Location);
+
+	// Interface OSaveRestore
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void OnPostRestore();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    FString GetSaveId();
 };

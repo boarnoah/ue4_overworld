@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "OSaveRestore.h"
 #include "GameFramework/Pawn.h"
 #include "OStrategicPawn.generated.h"
 
 UCLASS()
-class OVERWORLD_API AOStrategicPawn : public APawn
+class OVERWORLD_API AOStrategicPawn : public APawn, public IOSaveRestore
 {
 	GENERATED_BODY()
 
@@ -29,6 +31,11 @@ public:
 	UFUNCTION(Client, Reliable)
     void OnRePossesByPlayer();
 
+	// Interface OSaveRestore
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void OnPostRestore();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    FString GetSaveId();
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* Sphere;

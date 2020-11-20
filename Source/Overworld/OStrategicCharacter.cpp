@@ -50,3 +50,11 @@ void AOStrategicCharacter::OnInteractStart_Implementation()
 {
 }
 
+FString AOStrategicCharacter::GetSaveId_Implementation()
+{
+	return GetFName().ToString() + "_" + FGuid().ToString();
+}
+
+void AOStrategicCharacter::OnPostRestore_Implementation()
+{
+}
